@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-var cache map[string]*block.Blockchain = make(map[string]*block.Blockchain)
+var cache = make(map[string]*block.Blockchain)
 
 type BlockchainServer struct {
 	port uint16
@@ -44,7 +44,7 @@ func (bcs *BlockchainServer) GetChain(w http.ResponseWriter, req *http.Request) 
 		w.Header().Add("Content-Type", "application/json")
 		bc := bcs.GetBlockchain()
 		m, _ := bc.MarshalJSON()
-		io.WriteString(w, string(m[:]))
+		_, _ = io.WriteString(w, string(m[:]))
 	default:
 		log.Printf("ERROR: Invalid HTTP Method")
 
@@ -64,7 +64,7 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 			Transactions: transactions,
 			Length:       len(transactions),
 		})
-		io.WriteString(w, string(m[:]))
+		_, _ = io.WriteString(w, string(m[:]))
 
 	case http.MethodPost:
 		decoder := json.NewDecoder(req.Body)
@@ -72,12 +72,12 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 		err := decoder.Decode(&t)
 		if err != nil {
 			log.Printf("ERROR: %v", err)
-			io.WriteString(w, string(utils.JsonStatus("fail")))
+			_, _ = io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
 		if !t.Validate() {
 			log.Println("ERROR: missing field(s)")
-			io.WriteString(w, string(utils.JsonStatus("fail")))
+			_, _ = io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
 		publicKey := utils.PublicKeyFromString(*t.SenderPublicKey)
@@ -95,19 +95,19 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 			w.WriteHeader(http.StatusCreated)
 			m = utils.JsonStatus("success")
 		}
-		io.WriteString(w, string(m))
+		_, _ = io.WriteString(w, string(m))
 	case http.MethodPut:
 		decoder := json.NewDecoder(req.Body)
 		var t block.TransactionRequest
 		err := decoder.Decode(&t)
 		if err != nil {
 			log.Printf("ERROR: %v", err)
-			io.WriteString(w, string(utils.JsonStatus("fail")))
+			_, _ = io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
 		if !t.Validate() {
 			log.Println("ERROR: missing field(s)")
-			io.WriteString(w, string(utils.JsonStatus("fail")))
+			_, _ = io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
 		publicKey := utils.PublicKeyFromString(*t.SenderPublicKey)
@@ -124,11 +124,11 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 		} else {
 			m = utils.JsonStatus("success")
 		}
-		io.WriteString(w, string(m))
+		_, _ = io.WriteString(w, string(m))
 	case http.MethodDelete:
 		bc := bcs.GetBlockchain()
 		bc.ClearTransactionPool()
-		io.WriteString(w, string(utils.JsonStatus("success")))
+		_, _ = io.WriteString(w, string(utils.JsonStatus("success")))
 	default:
 		log.Println("ERROR: Invalid HTTP Method")
 		w.WriteHeader(http.StatusBadRequest)
@@ -149,7 +149,7 @@ func (bcs *BlockchainServer) Mine(w http.ResponseWriter, req *http.Request) {
 			m = utils.JsonStatus("success")
 		}
 		w.Header().Add("Content-Type", "application/json")
-		io.WriteString(w, string(m))
+		_, _ = io.WriteString(w, string(m))
 	default:
 		log.Println("ERROR: Invalid HTTP Method")
 		w.WriteHeader(http.StatusBadRequest)
@@ -164,7 +164,7 @@ func (bcs *BlockchainServer) StartMine(w http.ResponseWriter, req *http.Request)
 
 		m := utils.JsonStatus("success")
 		w.Header().Add("Content-Type", "application/json")
-		io.WriteString(w, string(m))
+		_, _ = io.WriteString(w, string(m))
 	default:
 		log.Println("ERROR: Invalid HTTP Method")
 		w.WriteHeader(http.StatusBadRequest)
@@ -177,11 +177,11 @@ func (bcs *BlockchainServer) Amount(w http.ResponseWriter, req *http.Request) {
 		blockchainAddress := req.URL.Query().Get("blockchain_address")
 		amount := bcs.GetBlockchain().CalculateTotalAmount(blockchainAddress)
 
-		ar := &block.AmountResponse{amount}
+		ar := &block.AmountResponse{Amount: amount}
 		m, _ := ar.MarshalJSON()
 
 		w.Header().Add("Content-Type", "application/json")
-		io.WriteString(w, string(m[:]))
+		_, _ = io.WriteString(w, string(m[:]))
 
 	default:
 		log.Printf("ERROR: Invalid HTTP Method")
@@ -197,9 +197,9 @@ func (bcs *BlockchainServer) Consensus(w http.ResponseWriter, req *http.Request)
 
 		w.Header().Add("Content-Type", "application/json")
 		if replaced {
-			io.WriteString(w, string(utils.JsonStatus("success")))
+			_, _ = io.WriteString(w, string(utils.JsonStatus("success")))
 		} else {
-			io.WriteString(w, string(utils.JsonStatus("fail")))
+			_, _ = io.WriteString(w, string(utils.JsonStatus("fail")))
 		}
 	default:
 		log.Printf("ERROR: Invalid HTTP Method")
