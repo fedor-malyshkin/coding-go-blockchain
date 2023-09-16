@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/fedor-malyshkin/coding-go-blockchain/utils"
+	//lint:ignore SA1019 -- use  RIPEMD-160 for bitcoin address generation
 	"golang.org/x/crypto/ripemd160"
 )
 

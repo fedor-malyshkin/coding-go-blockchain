@@ -16,16 +16,16 @@ import (
 )
 
 const (
-	MINING_DIFFICULTY = 3
-	MINING_SENDER     = "THE BLOCKCHAIN"
-	MINING_REWARD     = 1.0
-	MINING_TIMER_SEC  = 20
+	miningDifficulty = 3
+	miningSender     = "THE BLOCKCHAIN"
+	miningReward     = 1.0
+	miningTimerSec   = 20
 
-	BLOCKCHAIN_PORT_RANGE_START      = 5000
-	BLOCKCHAIN_PORT_RANGE_END        = 5003
-	NEIGHBOR_IP_RANGE_START          = 0
-	NEIGHBOR_IP_RANGE_END            = 1
-	BLOCKCHIN_NEIGHBOR_SYNC_TIME_SEC = 20
+	blockchainPortRangeStart      = 5000
+	blockchainPortRangeEnd        = 5003
+	neighborIPRangeStart          = 0
+	neighborIPRangeEnd            = 1
+	blockchainNeighborSyncTimeSec = 20
 )
 
 type Block struct {
@@ -138,8 +138,8 @@ func (bc *Blockchain) Run() {
 func (bc *Blockchain) SetNeighbors() {
 	bc.neighbors = utils.FindNeighbors(
 		utils.GetHost(), bc.port,
-		NEIGHBOR_IP_RANGE_START, NEIGHBOR_IP_RANGE_END,
-		BLOCKCHAIN_PORT_RANGE_START, BLOCKCHAIN_PORT_RANGE_END)
+		neighborIPRangeStart, neighborIPRangeEnd,
+		blockchainPortRangeStart, blockchainPortRangeEnd)
 	log.Printf("%v", bc.neighbors)
 }
 
@@ -151,7 +151,7 @@ func (bc *Blockchain) SyncNeighbors() {
 
 func (bc *Blockchain) StartSyncNeighbors() {
 	bc.SyncNeighbors()
-	_ = time.AfterFunc(time.Second*BLOCKCHIN_NEIGHBOR_SYNC_TIME_SEC, bc.StartSyncNeighbors)
+	_ = time.AfterFunc(time.Second*blockchainNeighborSyncTimeSec, bc.StartSyncNeighbors)
 }
 
 func (bc *Blockchain) TransactionPool() []*Transaction {
@@ -237,7 +237,7 @@ func (bc *Blockchain) AddTransaction(sender string, recipient string, value floa
 	senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
 	t := NewTransaction(sender, recipient, value)
 
-	if sender == MINING_SENDER {
+	if sender == miningSender {
 		bc.transactionPool = append(bc.transactionPool, t)
 		return true
 	}
@@ -249,9 +249,8 @@ func (bc *Blockchain) AddTransaction(sender string, recipient string, value floa
 		}
 		bc.transactionPool = append(bc.transactionPool, t)
 		return true
-	} else {
-		log.Println("ERROR: Verify Transaction")
 	}
+	log.Println("ERROR: Verify Transaction")
 	return false
 
 }
@@ -285,8 +284,8 @@ func (bc *Blockchain) ProofOfWork() int {
 	transactions := bc.CopyTransactionPool()
 	previousHash := bc.LastBlock().Hash()
 	nonce := 0
-	for !bc.ValidProof(nonce, previousHash, transactions, MINING_DIFFICULTY) {
-		nonce += 1
+	for !bc.ValidProof(nonce, previousHash, transactions, miningDifficulty) {
+		nonce++
 	}
 	return nonce
 }
@@ -301,7 +300,7 @@ func (bc *Blockchain) Mining() bool {
 		}
 	*/
 
-	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
+	bc.AddTransaction(miningSender, bc.blockchainAddress, miningReward, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
@@ -320,7 +319,7 @@ func (bc *Blockchain) Mining() bool {
 
 func (bc *Blockchain) StartMining() {
 	bc.Mining()
-	_ = time.AfterFunc(time.Second*MINING_TIMER_SEC, bc.StartMining)
+	_ = time.AfterFunc(time.Second*miningTimerSec, bc.StartMining)
 }
 
 func (bc *Blockchain) CalculateTotalAmount(blockchainAddress string) float32 {
@@ -349,7 +348,7 @@ func (bc *Blockchain) ValidChain(chain []*Block) bool {
 			return false
 		}
 
-		if !bc.ValidProof(b.Nonce(), b.PreviousHash(), b.Transactions(), MINING_DIFFICULTY) {
+		if !bc.ValidProof(b.Nonce(), b.PreviousHash(), b.Transactions(), miningDifficulty) {
 			return false
 		}
 
